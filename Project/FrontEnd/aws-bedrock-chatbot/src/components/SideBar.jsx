@@ -1,8 +1,15 @@
+// src/components/Sidebar.jsx
 import React from 'react';
-// Make sure react-icons is installed: npm install react-icons
-import { FiPlus, FiBook, FiGrid, FiFolder } from 'react-icons/fi';
+import { FiPlus, FiBook, FiGrid, FiFolder, FiLogOut } from 'react-icons/fi';
 
-const SideBar = ({ conversations, activeConversation, onNewChat, onSelectConversation }) => {
+const SideBar = ({ 
+  conversations, 
+  activeConversation, 
+  onNewChat, 
+  onSelectConversation,
+  onLogout,
+  user
+}) => {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
@@ -35,7 +42,7 @@ const SideBar = ({ conversations, activeConversation, onNewChat, onSelectConvers
           <h3>Explore</h3>
           <div className="sidebar-item">
             <FiGrid />
-            <span>Explore Our More Agents</span>
+            <span>Explore GPTs</span>
           </div>
         </div>
 
@@ -62,9 +69,17 @@ const SideBar = ({ conversations, activeConversation, onNewChat, onSelectConvers
 
       <div className="sidebar-footer">
         <div className="user-info">
-          <div className="user-avatar">A</div>
-          <div className="user-name">Aayush</div>
+          <div className="user-avatar">
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+          </div>
+          <div className="user-name">
+            {user?.name || 'User'}
+          </div>
         </div>
+        <button className="logout-button" onClick={onLogout}>
+          <FiLogOut />
+          <span>Logout</span>
+        </button>
       </div>
     </div>
   );

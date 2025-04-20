@@ -35,7 +35,7 @@ const ChatArea = ({
       <div className="messages-container">
         {messages.length === 0 ? (
           <div className="empty-chat">
-            <h1>How can I help, Aayush?</h1>
+            <h1>Hi, How can I help?</h1>
           </div>
         ) : (
           <>

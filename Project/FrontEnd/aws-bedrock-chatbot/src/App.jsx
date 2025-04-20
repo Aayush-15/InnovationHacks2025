@@ -1,13 +1,27 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from './components/SideBar';
 import ChatArea from './components/ChatArea';
 import LoginPage from './components/LoginPage';
 import { streamFromBedrockAgent, generateSessionId } from './services/bedrockAgentService';
 import './App.css';
 
-function App() {
-  const [user, setUser] = useState(null);
+// Login component with navigation
+function Login({ onLogin }) {
+  const navigate = useNavigate();
+  
+  const handleLogin = (userData) => {
+    onLogin(userData);
+    navigate('/chat');
+  };
+  
+  return <LoginPage onLogin={handleLogin} />;
+}
+
+// Chat interface component with navigation
+function Chat({ user, onLogout }) {
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState([
     { id: 'default', title: 'New Chat', messages: [], icon: '🤖' },
     { id: 'conv1', title: 'Chat History 1', messages: [], icon: '📚' },
@@ -19,11 +33,18 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(generateSessionId());
-
-  // Handle login
-  const handleLogin = (userData) => {
-    console.log('User logged in:', userData);
-    setUser(userData);
+  
+  // If no user is logged in, redirect to login
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+  
+  // Handle logout
+  const handleLogout = () => {
+    onLogout();
+    navigate('/login');
   };
 
   // Load messages for active conversation
@@ -47,6 +68,7 @@ function App() {
     setActiveConversation(newId);
     setMessages([]);
   };
+  
 
   const updateConversationMessages = (convId, newMessages) => {
     setConversations(prev => 
@@ -175,30 +197,68 @@ function App() {
     }
   };
 
-  // Render login page or chat interface based on login state
   return (
-    <div className="app">
-      {!user ? (
-        <LoginPage onLogin={handleLogin} />
-      ) : (
-        <div className="app-container">
-          <Sidebar 
-            conversations={conversations}
-            activeConversation={activeConversation}
-            onNewChat={handleNewChat}
-            onSelectConversation={setActiveConversation}
-          />
-          <ChatArea 
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-            activeConversation={activeConversation}
-            conversations={conversations}
-            user={user}
-          />
-        </div>
-      )}
+    <div className="app-container">
+      <Sidebar 
+        conversations={conversations}
+        activeConversation={activeConversation}
+        onNewChat={handleNewChat}
+        onSelectConversation={setActiveConversation}
+        onLogout={handleLogout}
+        user={user}
+      />
+      <ChatArea 
+        messages={messages}
+        onSendMessage={handleSendMessage}
+        isLoading={isLoading}
+        activeConversation={activeConversation}
+        conversations={conversations}
+        user={user}
+      />
     </div>
+  );
+}
+
+// Main App component with routing
+function App() {
+  const [user, setUser] = useState(null);
+  
+  // Check for user in localStorage on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('chatUser');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error('Error parsing saved user:', e);
+        localStorage.removeItem('chatUser');
+      }
+    }
+  }, []);
+
+  // Login handler
+  const handleLogin = (userData) => {
+    // Save user to state and localStorage
+    setUser(userData);
+    localStorage.setItem('chatUser', JSON.stringify(userData));
+  };
+  
+  // Logout handler
+  const handleLogout = () => {
+    // Clear user from state and localStorage
+    setUser(null);
+    localStorage.removeItem('chatUser');
+  };
+
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="/chat" element={<Chat user={user} onLogout={handleLogout} />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
   );
 }
 

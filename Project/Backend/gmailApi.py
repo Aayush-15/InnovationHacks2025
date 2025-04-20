@@ -55,7 +55,7 @@ def authorize():
 # ------------------ API: Read Emails ------------------
 
 @app.get("/emails")
-def read_gmail(filters: Optional[str] = Query(default="newer_than:2d is:unread")):
+def read_gmail(filters: Optional[str] = Query(default="newer_than:2d is:read")):
     try:
         creds = authenticate_gmail()
         service = build('gmail', 'v1', credentials=creds)

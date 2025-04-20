@@ -53,12 +53,19 @@ const ChatArea = ({
             ))}
             
             {/* Show spinner with text when loading */}
-            {isLoading && (
+            {/* {isLoading && (
               <div className="bot-message-container" style={{ padding: '20px', textAlign: 'center' }}>
                 <Spinner />
                 <div style={{ marginTop: '10px', color: '#666' }}>Thinking....</div>
               </div>
+            )} */}
+            {isLoading && (
+              <div className="bot-message-container" style={{ padding: '20px', textAlign: 'center' }}>
+                <Spinner />
+                <div style={{ marginTop: '10px', color: '#666' }}>Generating...</div>
+              </div>
             )}
+
           </>
         )}
         <div ref={messagesEndRef} />

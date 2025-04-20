@@ -32,7 +32,7 @@ function Chat({ user, onLogout }) {
   const [activeConversation, setActiveConversation] = useState('default');
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState(generateSessionId());
+  const [sessionId, setSessionId] = useState(generateSessionId());
   
   // If no user is logged in, redirect to login
   useEffect(() => {
@@ -55,13 +55,31 @@ function Chat({ user, onLogout }) {
     }
   }, [activeConversation, conversations]);
 
+  // const handleNewChat = () => {
+  //   const newId = `conv-${Date.now()}`;
+  //   const newConversation = {
+  //     id: newId,
+  //     title: 'New Chat',
+  //     messages: [],
+  //     icon: '🤖'
+  //   };
+    
+  //   setConversations([newConversation, ...conversations]);
+  //   setActiveConversation(newId);
+  //   setMessages([]);
+  // };
   const handleNewChat = () => {
+    // Generate a new session ID for the new chat
+    const newSessionId = generateSessionId();
+    setSessionId(newSessionId); // Update the session ID state
+    
     const newId = `conv-${Date.now()}`;
     const newConversation = {
       id: newId,
       title: 'New Chat',
       messages: [],
-      icon: '🤖'
+      icon: '🤖',
+      sessionId: newSessionId // Store the session ID with the conversation
     };
     
     setConversations([newConversation, ...conversations]);
@@ -90,6 +108,9 @@ function Chat({ user, onLogout }) {
   const handleSendMessage = async (text) => {
     if (!text.trim() || isLoading) return;
     
+    const currentConv = conversations.find(c => c.id === activeConversation);
+    const currentSessionId = currentConv?.sessionId || generateSessionId();
+  
     // Create user message
     const userMessage = {
       id: `msg-${Date.now()}`,
@@ -120,9 +141,20 @@ function Chat({ user, onLogout }) {
       };
       
       console.log('Calling Bedrock Agent...'); // Debug log
-      // Stream from Bedrock Agent
-      const fullResponse = await streamFromBedrockAgent(sessionId, conversationContext, handleChunk);
+      // Stream from Bedrock Agent - use currentSessionId instead of sessionId
+      const fullResponse = await streamFromBedrockAgent(currentSessionId, conversationContext, handleChunk);
       console.log('Received full response from Bedrock'); // Debug log
+      
+      // If we had to generate a new session ID, update the conversation to include it
+      if (!currentConv.sessionId) {
+        setConversations(prev => 
+          prev.map(conv => 
+            conv.id === activeConversation 
+              ? { ...conv, sessionId: currentSessionId } 
+              : conv
+          )
+        );
+      }
       
       // After receiving the complete response, add it as a new message
       const botMessage = {

@@ -6,8 +6,8 @@ const bedrockAgentClient = new BedrockAgentRuntimeClient({
   region: "us-east-1", // Change to your region
   credentials: {
     // Use AWS Amplify or another method for credentials management in production
-    accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY
+    accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY || ''
   },
 });
 

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import Message from './Message';
 import ChatHeader from './ChatHeader';
 import ChatInput from './ChatInput';
+import Spinner from './Spinner';
 import { streamFromBedrockAgent, generateSessionId } from '../services/bedrockAgentService';
 
 const ChatArea = ({ 
@@ -9,7 +10,8 @@ const ChatArea = ({
   onSendMessage,
   isLoading, 
   activeConversation, 
-  conversations 
+  conversations,
+  user
 }) => {
   const messagesEndRef = useRef(null);
   const [sessionId] = useState(generateSessionId());
@@ -20,10 +22,13 @@ const ChatArea = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   // Find current conversation
   const currentConversation = conversations.find(conv => conv.id === activeConversation) || {};
+
+  // Get user's name for greeting
+  const userName = user?.name || 'there';
 
   return (
     <div className="chat-area">
@@ -35,7 +40,7 @@ const ChatArea = ({
       <div className="messages-container">
         {messages.length === 0 ? (
           <div className="empty-chat">
-            <h1>Hi, How can I help?</h1>
+            <h1>How can I help, {userName}?</h1>
           </div>
         ) : (
           <>
@@ -46,6 +51,14 @@ const ChatArea = ({
                 isNew={index === messages.length - 1 && message.sender === 'bot'}
               />
             ))}
+            
+            {/* Show spinner with text when loading */}
+            {isLoading && (
+              <div className="bot-message-container" style={{ padding: '20px', textAlign: 'center' }}>
+                <Spinner />
+                <div style={{ marginTop: '10px', color: '#666' }}>Thinking....</div>
+              </div>
+            )}
           </>
         )}
         <div ref={messagesEndRef} />

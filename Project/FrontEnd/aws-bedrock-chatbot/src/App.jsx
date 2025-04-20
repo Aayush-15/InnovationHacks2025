@@ -106,96 +106,62 @@ function Chat({ user, onLogout }) {
     updateConversationMessages(activeConversation, updatedMessages);
     
     // Set loading state
+    console.log('Setting loading state to true'); // Debug log
     setIsLoading(true);
     
     try {
-      // Create bot placeholder for streaming
-      const botPlaceholderId = `msg-${Date.now() + 1}`;
-      const botPlaceholder = {
-        id: botPlaceholderId,
-        sender: 'bot',
-        text: '',
-        timestamp: new Date().toISOString(),
-        isStreaming: true,
-      };
-      
-      // Add placeholder message
-      setMessages([...updatedMessages, botPlaceholder]);
-      
-      // Update conversation title if it's a new conversation
-      const currentConv = conversations.find(c => c.id === activeConversation);
-      if (currentConv && currentConv.messages && currentConv.messages.length === 0) {
-        const newTitle = text.length > 30 ? `${text.substring(0, 27)}...` : text;
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === activeConversation 
-              ? { ...conv, title: newTitle } 
-              : conv
-          )
-        );
-      }
-      
       // Generate conversation context for agent
       const conversationContext = createConversationContext(updatedMessages);
       
-      // Streaming function to update UI with each chunk
+      // Prepare for streaming response
       let responseText = '';
       const handleChunk = (chunk) => {
         responseText += chunk;
-        
-        // Update the bot message with the latest chunk
-        setMessages(currentMessages => {
-          return currentMessages.map(msg => 
-            msg.id === botPlaceholderId 
-              ? { ...msg, text: responseText } 
-              : msg
-          );
-        });
       };
       
+      console.log('Calling Bedrock Agent...'); // Debug log
       // Stream from Bedrock Agent
-      await streamFromBedrockAgent(sessionId, conversationContext, handleChunk);
+      const fullResponse = await streamFromBedrockAgent(sessionId, conversationContext, handleChunk);
+      console.log('Received full response from Bedrock'); // Debug log
       
-      // Update the placeholder with final message and remove streaming flag
-      setMessages(currentMessages => {
-        return currentMessages.map(msg => 
-          msg.id === botPlaceholderId 
-            ? { ...msg, text: responseText, isStreaming: false } 
-            : msg
-        );
-      });
+      // After receiving the complete response, add it as a new message
+      const botMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: 'bot',
+        text: fullResponse,
+        timestamp: new Date().toISOString(),
+      };
+      
+      // Update messages with the bot response
+      const finalMessages = [...updatedMessages, botMessage];
+      setMessages(finalMessages);
       
       // Update conversation messages
-      const finalMessages = updatedMessages.concat([{
-        id: botPlaceholderId,
-        sender: 'bot',
-        text: responseText,
-        timestamp: new Date().toISOString(),
-      }]);
-      
       updateConversationMessages(activeConversation, finalMessages);
       
     } catch (error) {
-      // Handle error
       console.error('Error sending message to Bedrock agent:', error);
       
-      // Update with error message
-      setMessages(currentMessages => {
-        return currentMessages.map(msg => 
-          msg.sender === 'bot' && msg.isStreaming
-            ? { 
-                ...msg, 
-                text: 'Sorry, I encountered an error while communicating with AWS Bedrock. Please try again.', 
-                isStreaming: false,
-                isError: true
-              } 
-            : msg
-        );
-      });
+      // Add error message
+      const errorMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: 'bot',
+        text: 'Sorry, I encountered an error while communicating with AWS Bedrock. Please try again.',
+        timestamp: new Date().toISOString(),
+        isError: true
+      };
+      
+      const withError = [...updatedMessages, errorMessage];
+      setMessages(withError);
+      
+      // Update conversation's messages
+      updateConversationMessages(activeConversation, withError);
     } finally {
+      console.log('Setting loading state to false'); // Debug log
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className="app-container">

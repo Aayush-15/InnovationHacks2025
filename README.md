@@ -1,5 +1,7 @@
 # 🚀 InnovationHacks2025 – AI Productivity Assistant
 
+##DevPost: [InnovationHacks2025 – AI Productivity Assistant](https://devpost.com/software/ai-productivity-assistant-l38mn5)
+
 An intelligent virtual assistant built with **AWS Bedrock Agents**, **Lambda**, and **Google Workspace APIs (Gmail + Calendar)** to help users manage tasks, schedule meetings, and stay productive — all through natural language.
 
 ---
